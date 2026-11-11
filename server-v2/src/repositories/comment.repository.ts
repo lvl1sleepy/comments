@@ -60,7 +60,7 @@ export async function getCommentsByPostId(
         FROM comments AS child
         WHERE child.parent_id = c.id
       ) AS has_replies
-     FROM comments
+     FROM comments AS c
      WHERE post_id = $1
      ORDER BY id`,
     [postId],
