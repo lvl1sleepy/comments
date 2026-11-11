@@ -10,7 +10,6 @@ import {
   type LoginUserInput,
 } from "../services/auth.service.js";
 import { throwGraphQLError } from "./errors.js";
-import { GraphQLError } from "graphql";
 import type { GraphQLContext } from "./context.js";
 import {
   createCommentService,
@@ -20,6 +19,8 @@ import {
   getCommentRepliesService,
 } from "../services/comment.service.js";
 import { requireAuth } from "./auth.js";
+import { getPostsService, getPostService } from "../services/post.service.js";
+import type { PostRow } from "../repositories/post.repository.js";
 
 interface CreateCommentArgs {
   postId: string;
@@ -83,10 +84,29 @@ export const schema = createSchema<GraphQLContext>({
       accessToken: String!
     }
 
+    type Post {
+      id: ID!
+      title: String!
+      content: String!
+      createdAt: String!
+      updatedAt: String!
+      author: CommentAuthor
+    }
+
+    type PostPage {
+      items: [Post!]!
+      hasNextPage: Boolean!
+      nextCursor: ID
+    }
+
     type Query {
       topLevelComments(postId: ID!, afterId: ID, limit: Int!): CommentPage!
 
       commentReplies(parentId: ID!, afterId: ID, limit: Int!): CommentPage!
+
+      posts(limit: Int!, afterId: ID): PostPage!
+
+      post(id: ID!): Post
     }
 
     type Mutation {
@@ -125,6 +145,15 @@ export const schema = createSchema<GraphQLContext>({
       },
     },
 
+    Post: {
+      createdAt: (parent: PostRow) => parent.created_at.toISOString(),
+
+      updatedAt: (parent: PostRow) => parent.updated_at.toISOString(),
+
+      author: (parent: PostRow, _args: unknown, context: GraphQLContext) =>
+        context.loaders.author.load(parent.author_id),
+    },
+
     Query: {
       topLevelComments: async (
         _parent: unknown,
@@ -149,6 +178,28 @@ export const schema = createSchema<GraphQLContext>({
             limit: args.limit,
           });
         } catch (error: unknown) {
+          throwGraphQLError(error);
+        }
+      },
+
+      posts: async (
+        _parent,
+        args: { limit: number; afterId?: string | null },
+      ) => {
+        try {
+          return await getPostsService({
+            limit: args.limit,
+            afterId: args.afterId ?? null,
+          });
+        } catch (error) {
+          throwGraphQLError(error);
+        }
+      },
+
+      post: async (_parent, args: { id: string }) => {
+        try {
+          return await getPostService(args.id);
+        } catch (error) {
           throwGraphQLError(error);
         }
       },

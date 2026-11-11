@@ -12,7 +12,7 @@ const estimators: ComplexityEstimator[] = [
   ({ type, field, args, childComplexity }) => {
     if (
       type.name === "Query" &&
-      ["topLevelComments", "commentReplies"].includes(field.name)
+      ["topLevelComments", "commentReplies", "posts"].includes(field.name)
     ) {
       const limit = args.limit;
 
