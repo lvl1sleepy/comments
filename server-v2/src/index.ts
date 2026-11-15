@@ -53,8 +53,8 @@ app.use(yoga.graphqlEndpoint, graphqlCors, graphqlRateLimiter, yoga);
 
 const PORT = Number(process.env.PORT ?? 4000);
 
-const server = app.listen(PORT, () => {
-  console.info(`Server running on http://localhost:${PORT}/graphql`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.info(`Server listening on port ${PORT}`);
 });
 
 let isShuttingDown = false;
